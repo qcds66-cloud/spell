@@ -63,7 +63,7 @@ if 'play_audio' not in st.session_state:
 
 # ==================== 主視窗介面佈局 ====================
 
-st.title("📚 中文注音查詢 (網頁平板版)")
+st.title("📚 中文注音查詢")
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # 輸入區與選項
