@@ -25,7 +25,7 @@ def generate_zhuyin_html(text):
     font_size = "24px" if len(text) <= 5 else "16px"
     
     # 外層容器：使用 flexbox 讓多個字橫向排列，且對齊底部 (align-items: flex-end)
-    html = '<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 30px; justify-content: center; align-items: flex-end; margin-top: 50px;">'
+    html = '<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: flex-end; margin-top: 50px;">'
     
     for item in result:
         zhuyin = item[0]
