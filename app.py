@@ -1,7 +1,7 @@
 import streamlit as st
 from pypinyin import pinyin, Style
 from gtts import gTTS
-import tempfile
+from io import BytesIO
 import random
 
 # ==================== 初始化設定 ====================
@@ -11,39 +11,49 @@ st.set_page_config(page_title="中文注音查詢平板版", layout="centered")
 
 def get_random_color():
     """ 產生隨機且較深、清晰的顏色 """
-    r = random.randint(0, 200)
-    g = random.randint(0, 200)
-    b = random.randint(0, 200)
+    r = random.randint(0, 180)
+    g = random.randint(0, 180)
+    b = random.randint(0, 180)
     return f'#{r:02x}{g:02x}{b:02x}'
 
 def generate_zhuyin_html(text):
-    """ 將注音轉換為直式排版的 HTML/CSS """
+    """ 將文字與注音轉換為直式對照卡片 HTML/CSS """
     result = pinyin(text, style=Style.BOPOMOFO)
     tone_marks = ['ˊ', 'ˇ', 'ˋ', '˙']
     
-    # 字體大小設定 (超過 5 個字自動縮小以適應畫面)
-    font_size = "24px" if len(text) <= 5 else "16px"
+    # 依字數動態調整字體大小
+    hanzi_size = "24px" if len(text) <= 5 else "28px"
+    zhuyin_size = "16px" if len(text) <= 5 else "16px"
     
-    # 外層容器：使用 flexbox 讓多個字橫向排列，且對齊底部 (align-items: flex-end)
-    html = '<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: flex-end; margin-top: 50px;">'
+    html = '<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-end; margin-top: 30px;">'
     
-    for item in result:
+    for char, item in zip(text, result):
         zhuyin = item[0]
         
-        # 分離聲調與注音主體
+        # 分離聲調與注音主體 (聲調放最上方)
         tone = [c for c in zhuyin if c in tone_marks]
         body = [c for c in zhuyin if c not in tone_marks]
-        ordered_chars = tone + body  # 確保聲調在最上方
+        ordered_chars = tone + body
         
         color = get_random_color()
         
-        # 內層容器：單一注音的直向排列
-        html += f'<div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; color: {color}; font-size: {font_size}; font-family: \'Microsoft JhengHei\', sans-serif; font-weight: bold; background-color: #f5f6fa; padding: 10px; border-radius: 10px;">'
-        
-        for char in ordered_chars:
-            html += f'<div style="line-height: 1.2;">{char}</div>'
+        # 單字卡片容器：包含上方的直排注音與下方的漢字
+        html += f'''
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; background-color: #ffffff; padding: 16px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+            <!-- 注音直排區 -->
+            <div style="display: flex; flex-direction: column; align-items: center; color: {color}; font-size: {zhuyin_size}; font-family: \'Microsoft JhengHei\', sans-serif; font-weight: bold; margin-bottom: 8px;">
+        '''
+        for z_char in ordered_chars:
+            html += f'<div style="line-height: 1.1;">{z_char}</div>'
             
-        html += '</div>'
+        html += f'''
+            </div>
+            <!-- 漢字區 -->
+            <div style="font-size: {hanzi_size}; font-family: \'Microsoft JhengHei\', sans-serif; font-weight: bold; color: #2c3e50;">
+                {char}
+            </div>
+        </div>
+        '''
         
     html += '</div>'
     return html
@@ -63,14 +73,15 @@ if 'play_audio' not in st.session_state:
 
 # ==================== 主視窗介面佈局 ====================
 
-st.title("📚 中文注音查詢")
-st.markdown("<hr>", unsafe_allow_html=True)
+# 14px 標題設定
+st.markdown("<p style='font-size: 14px; font-weight: bold; font-family: \"Microsoft JhengHei\", sans-serif; margin: 0;'>📚 中文注音查詢</p>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top: 8px; margin-bottom: 20px;'>", unsafe_allow_html=True)
 
 # 輸入區與選項
 text = st.text_input("請輸入文字：", key="input_text", placeholder="例如：你好嗎")
 speak_chinese = st.checkbox("朗讀中文", value=True)
 
-# 按鈕區 (使用欄位並排)
+# 按鈕區 (欄位並排)
 col1, col2 = st.columns(2)
 
 with col1:
@@ -79,7 +90,7 @@ with col1:
             st.warning("請輸入文字！")
         else:
             st.session_state.result_text = text.strip()
-            st.session_state.play_audio = speak_chinese  # 只在按下按鈕的當下標記需要播放語音
+            st.session_state.play_audio = speak_chinese
 
 with col2:
     st.button("🗑️ 清除重填", on_click=clear_all, use_container_width=True)
@@ -88,20 +99,19 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # ==================== 結果顯示區 ====================
 if st.session_state.result_text:
-    # 顯示注音 HTML 排版
+    # 顯示注音與漢字 HTML 排版
     zhuyin_html = generate_zhuyin_html(st.session_state.result_text)
     st.markdown(zhuyin_html, unsafe_allow_html=True)
     
-    # 處理語音朗讀
+    # 處理語音朗讀 (使用 BytesIO 避開硬碟暫存)
     if st.session_state.play_audio:
         try:
+            mp3_fp = BytesIO()
             tts = gTTS(text=st.session_state.result_text, lang='zh-TW')
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
-                tts.save(fp.name)
-                # 使用 Streamlit 的 audio 元件，並啟用 autoplay 自動播放
-                st.audio(fp.name, format='audio/mp3', autoplay=True)
+            tts.write_to_fp(mp3_fp)
+            mp3_fp.seek(0)
+            st.audio(mp3_fp, format='audio/mp3', autoplay=True)
         except Exception as e:
             st.error(f"語音播放失敗: {e}")
             
-        # 播放完後重置狀態，避免下次單純點擊頁面其他元件時重複發聲
         st.session_state.play_audio = False
