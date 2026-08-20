@@ -22,7 +22,7 @@ def generate_zhuyin_html(text):
     tone_marks = ['ˊ', 'ˇ', 'ˋ', '˙']
     
     # 字體大小設定 (超過 5 個字自動縮小以適應畫面)
-    font_size = "32px" if len(text) <= 5 else "26px"
+    font_size = "24px" if len(text) <= 5 else "16px"
     
     # 外層容器：使用 flexbox 讓多個字橫向排列，且對齊底部 (align-items: flex-end)
     html = '<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 30px; justify-content: center; align-items: flex-end; margin-top: 50px;">'
