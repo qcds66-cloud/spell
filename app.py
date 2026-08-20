@@ -22,8 +22,8 @@ def generate_zhuyin_html(text):
     tone_marks = ['ˊ', 'ˇ', 'ˋ', '˙']
     
     # 依字數動態調整字體大小
-    hanzi_size = "24px" if len(text) <= 5 else "28px"
-    zhuyin_size = "16px" if len(text) <= 5 else "16px"
+    hanzi_size = "36px" if len(text) <= 5 else "28px"
+    zhuyin_size = "20px" if len(text) <= 5 else "16px"
     
     html = '<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-end; margin-top: 30px;">'
     
@@ -73,9 +73,8 @@ if 'play_audio' not in st.session_state:
 
 # ==================== 主視窗介面佈局 ====================
 
-# 14px 標題設定
-st.markdown("<p style='font-size: 14px; font-weight: bold; font-family: \"Microsoft JhengHei\", sans-serif; margin: 0;'>📚 中文注音查詢</p>", unsafe_allow_html=True)
-st.markdown("<hr style='margin-top: 8px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+st.title("📚 中文注音查詢")
+st.markdown("<hr>", unsafe_allow_html=True)
 
 # 輸入區與選項
 text = st.text_input("請輸入文字：", key="input_text", placeholder="例如：你好嗎")
