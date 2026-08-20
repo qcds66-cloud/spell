@@ -34,8 +34,8 @@ def generate_zhuyin_html(text):
     """ 將文字與注音轉換為直式對照卡片 (無多餘縮排，防止 Markdown 渲染錯誤) """
     result = pinyin(text, style=Style.BOPOMOFO)
     
-    hanzi_size = "36px" if len(text) <= 5 else "28px"
-    zhuyin_size = "20px" if len(text) <= 5 else "16px"
+    hanzi_size = "28px" if len(text) <= 4 else "28px"
+    zhuyin_size = "18px" if len(text) <= 4 else "16px"
     
     cards = []
     for char, item in zip(text, result):
